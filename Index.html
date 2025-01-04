@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gas Sensor Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #reading {
+            font-size: 3em;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .safe { background: #e6ffe6; color: green; }
+        .warning { background: #fff3e6; color: orange; }
+        .danger { background: #ffe6e6; color: red; }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gas Sensor Monitor</h1>
+    <div id="reading" class="safe">Connecting...</div>
+    <div id="controls">
+        <button class="button" onclick="stopBuzzer()">Stop Buzzer</button>
+        <button class="button" onclick="resetDevice()">Reset Device</button>
+    </div>
+    <script>
+        const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+        
+        client.on('connect', () => {
+            client.subscribe('gas/sensor/data');
+        });
+        
+        client.on('message', (topic, message) => {
+            const data = JSON.parse(message.toString());
+            updateDisplay(data);
+        });
+
+        function updateDisplay(data) {
+            const reading = document.getElementById('reading');
+            reading.textContent = ${data.gas_ppm.toFixed(2)} PPM;
+            reading.className = data.status;
+        }
+
+        function stopBuzzer() {
+            client.publish('gas/sensor/control', 'STOP_BUZZER');
+        }
+
+        function resetDevice() {
+            client.publish('gas/sensor/control', 'RESET');
+        }
+    </script>
+</body>
+</html>
